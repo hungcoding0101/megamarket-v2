@@ -1,0 +1,15 @@
+driver: org.postgresql.Driver
+hibernate.dialect: org.hibernate.dialect.PostgreSQLDialect
+liquibaseSchemaName: liquibase
+liquibaseRuntime: sourceSets.main.runtimeClasspath
+
+referenceUrl: hibernate:spring:hung.megamarketv2.common.generic.models?dialect=org.hibernate.dialect.PostgreSQLDialect\
+      &hibernate.physical_naming_strategy=org.hibernate.boot.model.naming.CamelCaseToUnderscoresNamingStrategy
+
+referenceDriver: liquibase.ext.hibernate.database.connection.HibernateDriver
+referenceDefaultSchema=hibernate
+
+changeLogFile: src/main/resources/db/changelog/db.changelog-master.yaml
+
+diffExcludeObjects: table:databasechangelog, table:databasechangeloglock
+diffChangeLogFile: src/main/resources/db/changelog/init.yaml

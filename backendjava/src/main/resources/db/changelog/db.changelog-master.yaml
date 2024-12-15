@@ -1,0 +1,5 @@
+databaseChangeLog:
+ - include:
+    file: db/changelog/init.yaml
+ - include:
+    file: db/changelog/add_persistent_keypair.yaml

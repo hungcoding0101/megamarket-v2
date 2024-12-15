@@ -1,0 +1,58 @@
+
+logging:
+  level: 
+    ROOT: info
+
+
+spring:
+  application:
+    name: megamarketv2
+    
+  datasource:
+    url: ${DB_URL}
+    username: ${POSTGRES_USER}
+    password: ${POSTGRES_PASSWORD}
+    hikari:
+      maximum-pool-size: 40
+      transaction-isolation: 2
+
+  jpa:
+    show-sql: true
+    hibernate:
+      ddl-auto: none
+
+    properties:
+      javax:
+        persistence:
+          transaction:
+            isolation: 2
+      hibernate:
+        generate-statistics: false
+
+    open-in-view: false
+    defer-datasource-initialization: false
+
+  jackson:
+    property-naming-strategy: SNAKE_CASE
+
+
+otp:
+    length: 6
+    lifetime-in-seconds: 120
+    verification-attempt-limit: 5
+
+request-lifetime-in-seconds: 1800 # 60*30
+
+password-lifetime-in-seconds: 15552000 # 3600*24*30*6
+
+keyset-uri: http://localhost:8080/oauth2/jwks
+
+access-token-lifetime-in-seconds: 86400
+
+refresh-token-lifetime-in-seconds: 2592000
+
+auth-client-id: ${AUTH_CLIENT_ID} 
+auth-client-secret: ${AUTH_CLIENT_SECRET}
+
+encryption-salt: ${AUTH_ENCRYPTION_SALT}
+encryption-password: ${AUTH_ENCRYPTION_PASSWORD}

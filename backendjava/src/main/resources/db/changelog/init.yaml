@@ -1,0 +1,634 @@
+databaseChangeLog:
+- changeSet:
+    id: 1733484268907-1
+    author: quoc hung (generated)
+    changes:
+    - createSequence:
+        incrementBy: 50
+        sequenceName: shared_sequence
+        startValue: 1
+- changeSet:
+    id: 1733484268907-2
+    author: quoc hung (generated)
+    changes:
+    - createTable:
+        columns:
+        - column:
+            constraints:
+              nullable: false
+              primaryKey: true
+              primaryKeyName: accountPK
+            name: id
+            type: BIGINT
+        - column:
+            constraints:
+              nullable: false
+            name: created_at
+            type: TIMESTAMP(6) WITHOUT TIME ZONE
+        - column:
+            constraints:
+              nullable: false
+            name: current_version
+            type: BIGINT
+        - column:
+            constraints:
+              nullable: false
+            name: text_id
+            type: VARCHAR(255)
+        - column:
+            constraints:
+              nullable: false
+            name: updated_at
+            type: TIMESTAMP(6) WITHOUT TIME ZONE
+        - column:
+            constraints:
+              nullable: false
+            defaultValueBoolean: true
+            name: is_enabled
+            type: BOOLEAN
+        - column:
+            constraints:
+              nullable: false
+            name: user_id
+            type: BIGINT
+        tableName: account
+- changeSet:
+    id: 1733484268907-3
+    author: quoc hung (generated)
+    changes:
+    - createTable:
+        columns:
+        - column:
+            constraints:
+              nullable: false
+              primaryKey: true
+              primaryKeyName: app_userPK
+            name: id
+            type: BIGINT
+        - column:
+            constraints:
+              nullable: false
+            name: created_at
+            type: TIMESTAMP(6) WITHOUT TIME ZONE
+        - column:
+            constraints:
+              nullable: false
+            name: current_version
+            type: BIGINT
+        - column:
+            constraints:
+              nullable: false
+            name: text_id
+            type: VARCHAR(255)
+        - column:
+            constraints:
+              nullable: false
+            name: updated_at
+            type: TIMESTAMP(6) WITHOUT TIME ZONE
+        - column:
+            constraints:
+              nullable: false
+            name: email
+            type: VARCHAR(255)
+        - column:
+            constraints:
+              nullable: false
+            defaultValueBoolean: true
+            name: is_enabled
+            type: BOOLEAN
+        - column:
+            constraints:
+              nullable: false
+            name: phone_number
+            type: VARCHAR(255)
+        - column:
+            name: role
+            type: VARCHAR(255)
+        tableName: app_user
+- changeSet:
+    id: 1733484268907-4
+    author: quoc hung (generated)
+    changes:
+    - createTable:
+        columns:
+        - column:
+            constraints:
+              nullable: false
+              primaryKey: true
+              primaryKeyName: avatarPK
+            name: id
+            type: BIGINT
+        - column:
+            constraints:
+              nullable: false
+            name: created_at
+            type: TIMESTAMP(6) WITHOUT TIME ZONE
+        - column:
+            constraints:
+              nullable: false
+            name: current_version
+            type: BIGINT
+        - column:
+            constraints:
+              nullable: false
+            name: text_id
+            type: VARCHAR(255)
+        - column:
+            constraints:
+              nullable: false
+            name: updated_at
+            type: TIMESTAMP(6) WITHOUT TIME ZONE
+        - column:
+            constraints:
+              nullable: false
+            name: image_id
+            type: BIGINT
+        - column:
+            name: profile_id
+            type: BIGINT
+        tableName: avatar
+- changeSet:
+    id: 1733484268907-5
+    author: quoc hung (generated)
+    changes:
+    - createTable:
+        columns:
+        - column:
+            constraints:
+              nullable: false
+              primaryKey: true
+              primaryKeyName: otp_requestPK
+            name: id
+            type: BIGINT
+        - column:
+            constraints:
+              nullable: false
+            name: created_at
+            type: TIMESTAMP(6) WITHOUT TIME ZONE
+        - column:
+            constraints:
+              nullable: false
+            name: current_version
+            type: BIGINT
+        - column:
+            constraints:
+              nullable: false
+            name: text_id
+            type: VARCHAR(255)
+        - column:
+            constraints:
+              nullable: false
+            name: updated_at
+            type: TIMESTAMP(6) WITHOUT TIME ZONE
+        - column:
+            constraints:
+              nullable: false
+            name: can_resend_at
+            type: TIMESTAMP(6) WITHOUT TIME ZONE
+        - column:
+            constraints:
+              nullable: false
+            name: expired_at
+            type: TIMESTAMP(6) WITHOUT TIME ZONE
+        - column:
+            constraints:
+              nullable: false
+            name: hashed_otp
+            type: VARCHAR(255)
+        - column:
+            constraints:
+              nullable: false
+            name: reference_id
+            type: VARCHAR(255)
+        - column:
+            constraints:
+              nullable: false
+            name: reference_type
+            type: VARCHAR(255)
+        - column:
+            constraints:
+              nullable: false
+            name: sent_at
+            type: TIMESTAMP(6) WITHOUT TIME ZONE
+        - column:
+            constraints:
+              nullable: false
+            name: status
+            type: VARCHAR(255)
+        - column:
+            constraints:
+              nullable: false
+            name: type
+            type: VARCHAR(255)
+        - column:
+            constraints:
+              nullable: false
+            defaultValueNumeric: 0
+            name: validation_attempts
+            type: INTEGER
+        tableName: otp_request
+- changeSet:
+    id: 1733484268907-6
+    author: quoc hung (generated)
+    changes:
+    - createTable:
+        columns:
+        - column:
+            constraints:
+              nullable: false
+              primaryKey: true
+              primaryKeyName: passwordPK
+            name: id
+            type: BIGINT
+        - column:
+            constraints:
+              nullable: false
+            name: created_at
+            type: TIMESTAMP(6) WITHOUT TIME ZONE
+        - column:
+            constraints:
+              nullable: false
+            name: current_version
+            type: BIGINT
+        - column:
+            constraints:
+              nullable: false
+            name: text_id
+            type: VARCHAR(255)
+        - column:
+            constraints:
+              nullable: false
+            name: updated_at
+            type: TIMESTAMP(6) WITHOUT TIME ZONE
+        - column:
+            constraints:
+              nullable: false
+            name: expired_at
+            type: TIMESTAMP(6) WITHOUT TIME ZONE
+        - column:
+            constraints:
+              nullable: false
+            defaultValueBoolean: true
+            name: is_enabled
+            type: BOOLEAN
+        - column:
+            constraints:
+              nullable: false
+            name: value
+            type: VARCHAR(255)
+        - column:
+            constraints:
+              nullable: false
+            name: user_id
+            type: BIGINT
+        tableName: password
+- changeSet:
+    id: 1733484268907-7
+    author: quoc hung (generated)
+    changes:
+    - createTable:
+        columns:
+        - column:
+            constraints:
+              nullable: false
+              primaryKey: true
+              primaryKeyName: profilePK
+            name: id
+            type: BIGINT
+        - column:
+            constraints:
+              nullable: false
+            name: created_at
+            type: TIMESTAMP(6) WITHOUT TIME ZONE
+        - column:
+            constraints:
+              nullable: false
+            name: current_version
+            type: BIGINT
+        - column:
+            constraints:
+              nullable: false
+            name: text_id
+            type: VARCHAR(255)
+        - column:
+            constraints:
+              nullable: false
+            name: updated_at
+            type: TIMESTAMP(6) WITHOUT TIME ZONE
+        - column:
+            name: date_of_birth
+            type: date
+        - column:
+            name: first_name
+            type: VARCHAR(255)
+        - column:
+            name: last_name
+            type: VARCHAR(255)
+        - column:
+            constraints:
+              nullable: false
+            name: user_id
+            type: BIGINT
+        tableName: profile
+- changeSet:
+    id: 1733484268907-8
+    author: quoc hung (generated)
+    changes:
+    - createTable:
+        columns:
+        - column:
+            constraints:
+              nullable: false
+              primaryKey: true
+              primaryKeyName: registration_requestPK
+            name: id
+            type: BIGINT
+        - column:
+            constraints:
+              nullable: false
+            name: created_at
+            type: TIMESTAMP(6) WITHOUT TIME ZONE
+        - column:
+            constraints:
+              nullable: false
+            name: current_version
+            type: BIGINT
+        - column:
+            constraints:
+              nullable: false
+            name: text_id
+            type: VARCHAR(255)
+        - column:
+            constraints:
+              nullable: false
+            name: updated_at
+            type: TIMESTAMP(6) WITHOUT TIME ZONE
+        - column:
+            name: email
+            type: VARCHAR(255)
+        - column:
+            constraints:
+              nullable: false
+            name: email_verification_status
+            type: VARCHAR(255)
+        - column:
+            constraints:
+              nullable: false
+            name: expired_at
+            type: TIMESTAMP(6) WITHOUT TIME ZONE
+        - column:
+            name: phone_number
+            type: VARCHAR(255)
+        - column:
+            constraints:
+              nullable: false
+            name: phone_number_verification_status
+            type: VARCHAR(255)
+        - column:
+            constraints:
+              nullable: false
+            name: role
+            type: VARCHAR(255)
+        - column:
+            constraints:
+              nullable: false
+            name: status
+            type: VARCHAR(255)
+        - column:
+            constraints:
+              nullable: false
+            name: step
+            type: VARCHAR(255)
+        tableName: registration_request
+- changeSet:
+    id: 1733484268907-9
+    author: quoc hung (generated)
+    changes:
+    - createTable:
+        columns:
+        - column:
+            constraints:
+              nullable: false
+              primaryKey: true
+              primaryKeyName: static_resourcePK
+            name: id
+            type: BIGINT
+        - column:
+            constraints:
+              nullable: false
+            name: created_at
+            type: TIMESTAMP(6) WITHOUT TIME ZONE
+        - column:
+            constraints:
+              nullable: false
+            name: current_version
+            type: BIGINT
+        - column:
+            constraints:
+              nullable: false
+            name: text_id
+            type: VARCHAR(255)
+        - column:
+            constraints:
+              nullable: false
+            name: updated_at
+            type: TIMESTAMP(6) WITHOUT TIME ZONE
+        - column:
+            constraints:
+              nullable: false
+            name: file_name
+            type: VARCHAR(255)
+        tableName: static_resource
+- changeSet:
+    id: 1733484268907-10
+    author: quoc hung (generated)
+    changes:
+    - addUniqueConstraint:
+        columnNames: text_id
+        constraintName: UC_ACCOUNTTEXT_ID_COL
+        tableName: account
+- changeSet:
+    id: 1733484268907-11
+    author: quoc hung (generated)
+    changes:
+    - addUniqueConstraint:
+        columnNames: user_id
+        constraintName: UC_ACCOUNTUSER_ID_COL
+        tableName: account
+- changeSet:
+    id: 1733484268907-12
+    author: quoc hung (generated)
+    changes:
+    - addUniqueConstraint:
+        columnNames: email
+        constraintName: UC_APP_USEREMAIL_COL
+        tableName: app_user
+- changeSet:
+    id: 1733484268907-13
+    author: quoc hung (generated)
+    changes:
+    - addUniqueConstraint:
+        columnNames: phone_number
+        constraintName: UC_APP_USERPHONE_NUMBER_COL
+        tableName: app_user
+- changeSet:
+    id: 1733484268907-14
+    author: quoc hung (generated)
+    changes:
+    - addUniqueConstraint:
+        columnNames: text_id
+        constraintName: UC_APP_USERTEXT_ID_COL
+        tableName: app_user
+- changeSet:
+    id: 1733484268907-15
+    author: quoc hung (generated)
+    changes:
+    - addUniqueConstraint:
+        columnNames: image_id
+        constraintName: UC_AVATARIMAGE_ID_COL
+        tableName: avatar
+- changeSet:
+    id: 1733484268907-16
+    author: quoc hung (generated)
+    changes:
+    - addUniqueConstraint:
+        columnNames: profile_id
+        constraintName: UC_AVATARPROFILE_ID_COL
+        tableName: avatar
+- changeSet:
+    id: 1733484268907-17
+    author: quoc hung (generated)
+    changes:
+    - addUniqueConstraint:
+        columnNames: text_id
+        constraintName: UC_AVATARTEXT_ID_COL
+        tableName: avatar
+- changeSet:
+    id: 1733484268907-18
+    author: quoc hung (generated)
+    changes:
+    - addUniqueConstraint:
+        columnNames: text_id
+        constraintName: UC_OTP_REQUESTTEXT_ID_COL
+        tableName: otp_request
+- changeSet:
+    id: 1733484268907-19
+    author: quoc hung (generated)
+    changes:
+    - addUniqueConstraint:
+        columnNames: text_id
+        constraintName: UC_PASSWORDTEXT_ID_COL
+        tableName: password
+- changeSet:
+    id: 1733484268907-20
+    author: quoc hung (generated)
+    changes:
+    - addUniqueConstraint:
+        columnNames: user_id
+        constraintName: UC_PASSWORDUSER_ID_COL
+        tableName: password
+- changeSet:
+    id: 1733484268907-21
+    author: quoc hung (generated)
+    changes:
+    - addUniqueConstraint:
+        columnNames: text_id
+        constraintName: UC_PROFILETEXT_ID_COL
+        tableName: profile
+- changeSet:
+    id: 1733484268907-22
+    author: quoc hung (generated)
+    changes:
+    - addUniqueConstraint:
+        columnNames: user_id
+        constraintName: UC_PROFILEUSER_ID_COL
+        tableName: profile
+- changeSet:
+    id: 1733484268907-23
+    author: quoc hung (generated)
+    changes:
+    - addUniqueConstraint:
+        columnNames: text_id
+        constraintName: UC_REGISTRATION_REQUESTTEXT_ID_COL
+        tableName: registration_request
+- changeSet:
+    id: 1733484268907-24
+    author: quoc hung (generated)
+    changes:
+    - addUniqueConstraint:
+        columnNames: file_name
+        constraintName: UC_STATIC_RESOURCEFILE_NAME_COL
+        tableName: static_resource
+- changeSet:
+    id: 1733484268907-25
+    author: quoc hung (generated)
+    changes:
+    - addUniqueConstraint:
+        columnNames: text_id
+        constraintName: UC_STATIC_RESOURCETEXT_ID_COL
+        tableName: static_resource
+- changeSet:
+    id: 1733484268907-26
+    author: quoc hung (generated)
+    changes:
+    - addForeignKeyConstraint:
+        baseColumnNames: image_id
+        baseTableName: avatar
+        constraintName: FK19r6kt5o7ib6ijwhuxeaudqyb
+        deferrable: false
+        initiallyDeferred: false
+        referencedColumnNames: id
+        referencedTableName: static_resource
+        validate: true
+- changeSet:
+    id: 1733484268907-27
+    author: quoc hung (generated)
+    changes:
+    - addForeignKeyConstraint:
+        baseColumnNames: user_id
+        baseTableName: password
+        constraintName: FK9uir54ehar53be0law61vjetp
+        deferrable: false
+        initiallyDeferred: false
+        referencedColumnNames: id
+        referencedTableName: app_user
+        validate: true
+- changeSet:
+    id: 1733484268907-28
+    author: quoc hung (generated)
+    changes:
+    - addForeignKeyConstraint:
+        baseColumnNames: user_id
+        baseTableName: account
+        constraintName: FKjajia7qudllc01cly9yddon8u
+        deferrable: false
+        initiallyDeferred: false
+        referencedColumnNames: id
+        referencedTableName: app_user
+        validate: true
+- changeSet:
+    id: 1733484268907-29
+    author: quoc hung (generated)
+    changes:
+    - addForeignKeyConstraint:
+        baseColumnNames: profile_id
+        baseTableName: avatar
+        constraintName: FKlu0m9olbo1mjb8owwrn3xh0a9
+        deferrable: false
+        initiallyDeferred: false
+        referencedColumnNames: id
+        referencedTableName: profile
+        validate: true
+- changeSet:
+    id: 1733484268907-30
+    author: quoc hung (generated)
+    changes:
+    - addForeignKeyConstraint:
+        baseColumnNames: user_id
+        baseTableName: profile
+        constraintName: FKrj2ycn1gq2m8533014hl2kv0t
+        deferrable: false
+        initiallyDeferred: false
+        referencedColumnNames: id
+        referencedTableName: app_user
+        validate: true

@@ -1,0 +1,49 @@
+databaseChangeLog:
+- changeSet:
+    id: 1733819794949-1
+    author: quoc hung (generated)
+    changes:
+    - createTable:
+        columns:
+        - column:
+            constraints:
+              nullable: false
+              primaryKey: true
+              primaryKeyName: persistent_key_pairPK
+            name: id
+            type: BIGINT
+        - column:
+            constraints:
+              nullable: false
+            name: created_at
+            type: TIMESTAMP(6) WITHOUT TIME ZONE
+        - column:
+            constraints:
+              nullable: false
+            name: current_version
+            type: BIGINT
+        - column:
+            constraints:
+              nullable: false
+            name: text_id
+            type: VARCHAR(255)
+        - column:
+            constraints:
+              nullable: false
+            name: updated_at
+            type: TIMESTAMP(6) WITHOUT TIME ZONE
+        - column:
+            name: private_key_bytes
+            type: OID
+        - column:
+            name: public_key_bytes
+            type: OID
+        tableName: persistent_key_pair
+- changeSet:
+    id: 1733819794949-2
+    author: quoc hung (generated)
+    changes:
+    - addUniqueConstraint:
+        columnNames: text_id
+        constraintName: UC_PERSISTENT_KEY_PAIRTEXT_ID_COL
+        tableName: persistent_key_pair
