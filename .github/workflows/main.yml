@@ -1,0 +1,6 @@
+name: demo
+
+on:
+  push:
+    branches:
+      - main
