@@ -167,7 +167,7 @@ public class SecurityConfig {
 	SecurityFilterChain defaultSecurityFilterChain(HttpSecurity http, JwtDecoder jwtDecoder,
 			HandlerExceptionResolver exceptionResolver)
 			throws Exception {
-		// test comment
+		// test comment again
 		http.formLogin(Customizer.withDefaults());
 
 		http.authorizeHttpRequests(
