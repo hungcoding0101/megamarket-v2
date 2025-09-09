@@ -1,10 +1,15 @@
 package hung.megamarketv2.ecommerce.modules.security.services;
 
+import java.util.Collections;
+import java.util.List;
+
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import hung.megamarketv2.common.generic.constants.SecurityConstants;
 import hung.megamarketv2.common.generic.models.Password;
 import hung.megamarketv2.common.generic.models.User;
 import hung.megamarketv2.common.generic.results.Result;
@@ -44,7 +49,13 @@ public class SecurityUserServiceImp implements SecurityUserService {
 
         Password password = passwordResult.value;
 
-        return new SecurityUser(user, password.getValue());
+        String roleString = SecurityConstants.ROLE_PREFIX + user.getRole().toString();
+
+        List<SimpleGrantedAuthority> authorities = Collections
+                .singletonList(new SimpleGrantedAuthority(roleString));
+        String stringId = Long.toString(user.getId());
+
+        return new SecurityUser(stringId, password.getValue(), authorities, user.isEnabled());
     }
 
 }

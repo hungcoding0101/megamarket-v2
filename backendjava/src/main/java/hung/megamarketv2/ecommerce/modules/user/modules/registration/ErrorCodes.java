@@ -24,7 +24,8 @@ public final class ErrorCodes {
         INVALID_REQUEST_STEP,
         OTP_EXPIRED,
         OTP_NOT_MATCHED,
-        REACHED_OTP_ATTEMPT_LIMIT;
+        REACHED_OTP_ATTEMPT_LIMIT,
+        UNABLE_TO_GET_ACCESS_TOKEN;
 
         public static final class StringRepresentation {
             public static final String INVALID_EMAIL = "INVALID_EMAIL";
@@ -35,7 +36,6 @@ public final class ErrorCodes {
             public static final String MISSING_OTP_COOLDOWN_SECONDS = "MISSING_OTP_COOLDOWN_SECONDS";
             public static final String MISSING_REGISTRATION_TOKEN = "MISSING_REGISTRATION_TOKEN";
             public static final String MISSING_PASSWORD = "MISSING_PASSWORD";
-
 
             private StringRepresentation() {
             }

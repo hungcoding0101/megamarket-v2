@@ -1,0 +1,30 @@
+
+{
+"registration":{
+    "errors":{
+        "INVALID_EMAIL": "Invalid email",
+        "INVALID_PASSWORD": "Invalid password",
+        "INVALID_PHONE_NUMBER": "Invalid phone number",
+        "MISSING_EMAIL": "Missing email",
+        "MISSING_PHONE_NUMBER": "Missing phone number",
+        "MISSING_ROLE": "Missing role",
+        "MISSING_OTP": "Missing OTP",
+        "MISSING_PASSWORD": "Missing password",
+        "MISSING_OTP_COOLDOWN_SECONDS": "Missing OTP cooldown seconds",
+        "MISSING_REGISTRATION_TOKEN": "Missing registration token",
+        "USER_NOT_FOUND": "User not found",
+        "EMAIL_HAS_BEEN_USED": "Email has been used",
+        "EMAIL_NOT_VERIFIED": "Email not verified",
+        "PHONE_NUMBER_HAS_BEEN_USED": "Phone number has been used",
+        "RESEND_OTP_TOO_FREQUENTLY": "Resend OTP too frequently",
+        "REQUEST_NOT_FOUND": "Request not found",
+        "REQUEST_EXPIRED": "Request expired",
+        "INVALID_REQUEST_STATUS": "Invalid request status",
+        "INVALID_REQUEST_STEP": "Invalid request step",
+        "OTP_EXPIRED": "OTP expired",
+        "OTP_NOT_MATCHED": "OTP not matched",
+        "REACHED_OTP_ATTEMPT_LIMIT": "Reached OTP attempt limit",
+        "UNABLE_TO_GET_ACCESS_TOKEN": "Unable to get access token"
+    }
+}
+}

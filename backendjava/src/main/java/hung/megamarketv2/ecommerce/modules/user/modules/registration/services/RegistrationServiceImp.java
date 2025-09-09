@@ -5,9 +5,13 @@ import java.util.Arrays;
 import java.util.List;
 
 import org.apache.commons.lang3.RandomStringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import hung.megamarketv2.common.account.ErrorCodes.AccountRepositoryErrorCodes;
 import hung.megamarketv2.common.account.repositories.AccountRepository;
@@ -17,8 +21,8 @@ import hung.megamarketv2.common.generic.enums.OtpEnums.OtpType;
 import hung.megamarketv2.common.generic.enums.RegistrationEnums.EmailVerificationStatus;
 import hung.megamarketv2.common.generic.enums.RegistrationEnums.RegistrationStatus;
 import hung.megamarketv2.common.generic.enums.RegistrationEnums.RegistrationSteps;
-import hung.megamarketv2.common.generic.models.User;
 import hung.megamarketv2.common.generic.outcomes.Outcome;
+import hung.megamarketv2.common.generic.models.User;
 import hung.megamarketv2.common.generic.models.Account;
 import hung.megamarketv2.common.generic.models.Password;
 import hung.megamarketv2.common.generic.models.Profile;
@@ -38,8 +42,11 @@ import hung.megamarketv2.common.user.repositories.UserRepository;
 import hung.megamarketv2.common.utils.EmailUtils;
 import hung.megamarketv2.common.utils.PhoneNumerUtils;
 import hung.megamarketv2.common.generic.exceptions.CommonExceptions.UnexpectedErrorException;
-
+import hung.megamarketv2.ecommerce.modules.security.ErrorCodes.SecurityServiceErrorCodes;
+import hung.megamarketv2.ecommerce.modules.security.services.SecurityService;
+import hung.megamarketv2.ecommerce.modules.user.modules.registration.Dto.EmailOtpSendingResult;
 import hung.megamarketv2.ecommerce.modules.user.modules.registration.Dto.EmailSubmissionResult;
+import hung.megamarketv2.ecommerce.modules.user.modules.registration.Dto.PasswordSubmissionResult;
 import hung.megamarketv2.ecommerce.modules.user.modules.registration.ErrorCodes.RegistrationRepositoryErrorCodes;
 import hung.megamarketv2.ecommerce.modules.user.modules.registration.ErrorCodes.RegistrationServiceErrorCodes;
 import hung.megamarketv2.ecommerce.modules.user.modules.registration.repositories.RegistrationRepository;
@@ -53,7 +60,11 @@ public class RegistrationServiceImp implements RegistrationService {
     public static final int DEFAULT_FIRST_NAME_LENGTH = 10;
     public static final int DEFAULT_LAST_NAME_LENGTH = 10;
 
+    private final Logger logger = LoggerFactory.getLogger(RegistrationServiceImp.class);
+
     private final OtpService otpService;
+
+    private final SecurityService securityService;
 
     private final PasswordService passwordService;
 
@@ -66,6 +77,8 @@ public class RegistrationServiceImp implements RegistrationService {
     private final UserRepository userRepository;
 
     private final RegistrationRepository registrationRepository;
+
+    private final PlatformTransactionManager transactionManager;
 
     private final EmailUtils emailUtils = new EmailUtils();
 
@@ -88,7 +101,6 @@ public class RegistrationServiceImp implements RegistrationService {
         if (!isValidEmail) {
             return Result.ofError(RegistrationServiceErrorCodes.INVALID_EMAIL);
         }
-
         Result<User, UserRepositoryErrorCodes> result = userRepository.findByEmail(email);
 
         boolean usedEmail = result.isSuccessful;
@@ -130,6 +142,47 @@ public class RegistrationServiceImp implements RegistrationService {
                 request.getTextId());
 
         return Result.ofValue(emailSubmissionResult);
+    }
+
+    @Transactional
+    @Override
+    public Result<EmailOtpSendingResult, RegistrationServiceErrorCodes> sendEmailOtp(String registrationToken) {
+        Result<RegistrationRequest, RegistrationRepositoryErrorCodes> requestFindingResult = registrationRepository
+                .findtByTextIdThenLockRequestInDatabase(registrationToken);
+
+        if (!requestFindingResult.isSuccessful) {
+            RegistrationServiceErrorCodes errorCode = parseErrorCode(requestFindingResult.error);
+            return Result.ofError(errorCode);
+        }
+
+        RegistrationRequest request = requestFindingResult.value;
+
+        List<RegistrationStatus> expectedStatuses = Arrays.asList(RegistrationStatus.PROCESSING);
+
+        List<RegistrationSteps> expectedSteps = Arrays.asList(RegistrationSteps.VERIFY_EMAIL_OTP);
+
+        Outcome<RegistrationServiceErrorCodes> valitationOutcome = validateRegistrationRequest(request,
+                expectedSteps, expectedStatuses);
+
+        if (!valitationOutcome.isSuccessful) {
+            return Result.ofError(valitationOutcome.error);
+        }
+
+        OtpIdentity otpIdentity = new OtpIdentity(OtpType.EMAIL, OTP_REFERENCE_TYPE, request.getTextId());
+        Result<OtpSendingResult, OtpServiceErrorCodes> sendingResult = otpService.sendOtp(otpIdentity,
+                request.getEmail(),
+                null);
+
+        if (!sendingResult.isSuccessful) {
+            RegistrationServiceErrorCodes errorCode = parseErrorCode(sendingResult.error);
+            return Result.ofError(errorCode);
+        }
+
+        OtpSendingResult otpSendingResult = sendingResult.value;
+
+        EmailOtpSendingResult emailOtpSendingResult = new EmailOtpSendingResult(otpSendingResult.coolDownSeconds());
+
+        return Result.ofValue(emailOtpSendingResult);
     }
 
     @Transactional
@@ -227,65 +280,87 @@ public class RegistrationServiceImp implements RegistrationService {
 
     }
 
-    @Transactional
     @Override
-    public Outcome<RegistrationServiceErrorCodes> submitPassword(String rawPassword,
+    public Result<PasswordSubmissionResult, RegistrationServiceErrorCodes> submitPassword(String rawPassword,
             String registrationToken) {
-        boolean isPasswordValid = passwordService.validatePassword(rawPassword);
 
-        if (!isPasswordValid) {
-            return Outcome.ofError(RegistrationServiceErrorCodes.INVALID_PASSWORD);
+        TransactionTemplate transactionTemplate = new TransactionTemplate(transactionManager);
+
+        Result<User, RegistrationServiceErrorCodes> userResult = transactionTemplate.execute(status -> {
+            boolean isPasswordValid = passwordService.validatePassword(rawPassword);
+
+            if (!isPasswordValid) {
+                return Result.ofError(RegistrationServiceErrorCodes.INVALID_PASSWORD);
+            }
+
+            Result<RegistrationRequest, RegistrationRepositoryErrorCodes> registrationRequestResult = registrationRepository
+                    .findtByTextIdThenLockRequestInDatabase(registrationToken);
+
+            if (!registrationRequestResult.isSuccessful) {
+                RegistrationServiceErrorCodes errorCode = parseErrorCode(registrationRequestResult.error);
+                return Result.ofError(errorCode);
+            }
+
+            RegistrationRequest request = registrationRequestResult.value;
+
+            List<RegistrationStatus> expectedStatuses = Arrays.asList(RegistrationStatus.PROCESSING);
+
+            List<RegistrationSteps> expectedSteps = Arrays.asList(RegistrationSteps.SUBMIT_PASSWORD);
+
+            Outcome<RegistrationServiceErrorCodes> valitationOutcome = validateRegistrationRequest(request,
+                    expectedSteps, expectedStatuses);
+
+            boolean isInvalidRequest = !valitationOutcome.isSuccessful;
+            if (isInvalidRequest) {
+                return Result.ofError(valitationOutcome.error);
+            }
+
+            if (request.getEmail() == null) {
+                return Result.ofError(RegistrationServiceErrorCodes.MISSING_EMAIL);
+            }
+
+            if (request.getPhoneNumber() == null) {
+                return Result.ofError(RegistrationServiceErrorCodes.MISSING_PHONE_NUMBER);
+            }
+
+            if (request.getEmailVerificationStatus() != EmailVerificationStatus.VERIFIED) {
+                return Result.ofError(RegistrationServiceErrorCodes.EMAIL_NOT_VERIFIED);
+            }
+
+            Result<User, RegistrationServiceErrorCodes> userCreationResult = createUser(request.getEmail(),
+                    request.getPhoneNumber(), request.getRole(), rawPassword);
+
+            if (!userCreationResult.isSuccessful) {
+                status.setRollbackOnly();
+                return Result.ofError(userCreationResult.error);
+            }
+
+            request.setStatus(RegistrationStatus.APPROVED);
+            request.setStep(RegistrationSteps.COMPLETED);
+
+            return userCreationResult;
+        });
+
+        if (!userResult.isSuccessful) {
+            return Result.ofError(userResult.error);
         }
 
-        Result<RegistrationRequest, RegistrationRepositoryErrorCodes> registrationRequestResult = registrationRepository
-                .findtByTextIdThenLockRequestInDatabase(registrationToken);
+        User user = userResult.value;
 
-        if (!registrationRequestResult.isSuccessful) {
-            RegistrationServiceErrorCodes errorCode = parseErrorCode(registrationRequestResult.error);
-            return Outcome.ofError(errorCode);
+        Result<String, SecurityServiceErrorCodes> accessTokenResult = securityService
+                .getAccessTokenForUser(user.getId(), Arrays.asList(user.getRole().toString()));
+
+        if (!accessTokenResult.isSuccessful) {
+            logger.warn("Unable to get access token for user {}", user.getId());
+            return Result.ofValue(null);
         }
 
-        RegistrationRequest request = registrationRequestResult.value;
-
-        List<RegistrationStatus> expectedStatuses = Arrays.asList(RegistrationStatus.PROCESSING);
-
-        List<RegistrationSteps> expectedSteps = Arrays.asList(RegistrationSteps.SUBMIT_PASSWORD);
-
-        Outcome<RegistrationServiceErrorCodes> valitationOutcome = validateRegistrationRequest(request,
-                expectedSteps, expectedStatuses);
-
-        boolean isInvalidRequest = !valitationOutcome.isSuccessful;
-        if (isInvalidRequest) {
-            return Outcome.ofError(valitationOutcome.error);
-        }
-
-        if (request.getEmail() == null) {
-            return Outcome.ofError(RegistrationServiceErrorCodes.MISSING_EMAIL);
-        }
-
-        if (request.getPhoneNumber() == null) {
-            return Outcome.ofError(RegistrationServiceErrorCodes.MISSING_PHONE_NUMBER);
-        }
-
-        if (request.getEmailVerificationStatus() != EmailVerificationStatus.VERIFIED) {
-            return Outcome.ofError(RegistrationServiceErrorCodes.EMAIL_NOT_VERIFIED);
-        }
-
-        Outcome<RegistrationServiceErrorCodes> userCreationOutcome = createUser(request.getEmail(),
-                request.getPhoneNumber(), request.getRole(), rawPassword);
-
-        if (!userCreationOutcome.isSuccessful) {
-            return userCreationOutcome;
-        }
-
-        request.setStatus(RegistrationStatus.APPROVED);
-        request.setStep(RegistrationSteps.COMPLETED);
-
-        return Outcome.ofSuccess();
+        PasswordSubmissionResult result = new PasswordSubmissionResult(accessTokenResult.value);
+        return Result.ofValue(result);
 
     }
 
-    private Outcome<RegistrationServiceErrorCodes> createUser(String email, String phoneNumber, UserRole role,
+    private Result<User, RegistrationServiceErrorCodes> createUser(String email, String phoneNumber, UserRole role,
             String rawPassword) {
         User user = new User(email, phoneNumber, role);
 
@@ -293,7 +368,7 @@ public class RegistrationServiceImp implements RegistrationService {
 
         if (!userCreationResult.isSuccessful) {
             RegistrationServiceErrorCodes errorCode = parseErrorCode(userCreationResult.error);
-            return Outcome.ofError(errorCode);
+            return Result.ofError(errorCode);
         }
 
         String hashedPassword = passwordService.encodePassword(rawPassword);
@@ -303,20 +378,19 @@ public class RegistrationServiceImp implements RegistrationService {
         Result<Password, PasswordRepositoryErrorCodes> passwordCreationResult = passwordRepository
                 .createPassword(password);
 
-        if (!passwordCreationResult.isSuccessful){
+        if (!passwordCreationResult.isSuccessful) {
             RegistrationServiceErrorCodes errorCode = parseErrorCode(passwordCreationResult.error);
-            return Outcome.ofError(errorCode);
+            return Result.ofError(errorCode);
         }
-
 
         Account account = new Account(user);
 
         Result<Account, AccountRepositoryErrorCodes> accountCreationResult = accountRepository
                 .createAccount(account);
 
-        if (!accountCreationResult.isSuccessful){
+        if (!accountCreationResult.isSuccessful) {
             RegistrationServiceErrorCodes errorCode = parseErrorCode(accountCreationResult.error);
-            return Outcome.ofError(errorCode);
+            return Result.ofError(errorCode);
         }
 
         String randomFirstName = RandomStringUtils.randomAlphabetic(DEFAULT_FIRST_NAME_LENGTH);
@@ -326,12 +400,12 @@ public class RegistrationServiceImp implements RegistrationService {
         Result<Profile, ProfileRepositoryErrorCodes> profileCreationResult = profileRepository
                 .createProfile(profile);
 
-        if (!profileCreationResult.isSuccessful){
+        if (!profileCreationResult.isSuccessful) {
             RegistrationServiceErrorCodes errorCode = parseErrorCode(profileCreationResult.error);
-            return Outcome.ofError(errorCode);
+            return Result.ofError(errorCode);
         }
 
-        return Outcome.ofSuccess();
+        return Result.ofValue(userCreationResult.value);
     }
 
     private RegistrationServiceErrorCodes parseErrorCode(Enum<?> lowerLevelErrorCode) {
@@ -369,7 +443,6 @@ public class RegistrationServiceImp implements RegistrationService {
         }
 
         return Outcome.ofSuccess();
-
     }
 
 }

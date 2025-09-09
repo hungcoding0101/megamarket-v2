@@ -7,43 +7,49 @@ import jakarta.validation.constraints.NotNull;
 public class Dto {
 
         public static record EmailSubmissionRequest(
-                        @NotNull(message = StringRepresentation.MISSING_EMAIL)
+                        @NotNull
                         String email,
 
-                        @NotNull(message = StringRepresentation.MISSING_ROLE)
+                        @NotNull
                         UserRole role) {
         }
 
         public static record EmailSubmissionResult(
-                        @NotNull(message = StringRepresentation.MISSING_OTP_COOLDOWN_SECONDS)
-                        int otpCooldownSeconds,
-                                        
-                        @NotNull(message = StringRepresentation.MISSING_REGISTRATION_TOKEN)
-                        String registrationToken) {
+                        @NotNull int otpCooldownSeconds,
+
+                        @NotNull String registrationToken) {
+        }
+        
+        public static record EmailOtpSendingResult(
+                        @NotNull
+                        int otpCooldownSeconds) {
         }
 
         public static record EmailVerificationRequest(
-                        @NotNull(message = StringRepresentation.MISSING_OTP)
+                        @NotNull
                         String otp,
                                         
-                        @NotNull(message = StringRepresentation.MISSING_REGISTRATION_TOKEN)
+                        @NotNull
                         String registrationToken) {
         }
 
         public static record PhoneNumberSubmissionRequest(
-                        @NotNull(message = StringRepresentation.MISSING_PHONE_NUMBER)
+                        @NotNull
                         String phoneNumber,
                                                         
-                        @NotNull(message = StringRepresentation.MISSING_REGISTRATION_TOKEN)
+                        @NotNull
                         String registrationToken) {
         }
 
         public static record PasswordSubmissionRequest(
-                        @NotNull(message = StringRepresentation.MISSING_PASSWORD)
+                        @NotNull
                         String password,
                                                         
-                        @NotNull(message = StringRepresentation.MISSING_REGISTRATION_TOKEN)
+                        @NotNull
                         String registrationToken) {
+        }
+        public static record PasswordSubmissionResult(
+                       String accessToken) {
         }
 
 }

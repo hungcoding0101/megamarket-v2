@@ -1,32 +1,45 @@
 package hung.megamarketv2.ecommerce.modules.security;
 
 import java.util.Collection;
-import java.util.Collections;
+import java.util.List;
 
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
-import hung.megamarketv2.common.generic.models.User;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
+@JsonDeserialize
+@JsonIgnoreProperties(ignoreUnknown = true)
+@Setter
+@NoArgsConstructor
 public class SecurityUser implements UserDetails {
 
-    public static final String ROLE_PREFIX = "ROLE_";
+    @JsonProperty("username")
+    private String userName;
 
-    private final transient User user;
+    private String password;
 
-    private final String password;
+    private boolean isEnabled;
 
-    public SecurityUser(User user, String password) {
-        this.user = user;
+    private List<SimpleGrantedAuthority> authorities;
+
+    public SecurityUser(String userName, String password, List<SimpleGrantedAuthority> authorities,
+            boolean isEnabled) {
+        this.userName = userName;
         this.password = password;
+        this.authorities = authorities;
+        this.isEnabled = isEnabled;
     }
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        String roleString = ROLE_PREFIX + user.getRole().toString();
-
-        return Collections.singletonList(new SimpleGrantedAuthority(roleString));
+        return authorities;
     }
 
     @Override
@@ -36,7 +49,7 @@ public class SecurityUser implements UserDetails {
 
     @Override
     public String getUsername() {
-        return user.getEmail();
+        return userName;
     }
 
     @Override
@@ -56,7 +69,7 @@ public class SecurityUser implements UserDetails {
 
     @Override
     public boolean isEnabled() {
-        return user.isEnabled();
+        return isEnabled;
     }
 
 }

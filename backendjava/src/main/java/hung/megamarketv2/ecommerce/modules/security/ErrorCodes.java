@@ -14,6 +14,10 @@ public final class ErrorCodes {
         INVALID_KEY_SPECIFICATION
     }
 
+    public enum SecurityServiceErrorCodes {
+        UNABLE_TO_GET_ACCESS_TOKEN
+    }
+
     private ErrorCodes() {
     }
 

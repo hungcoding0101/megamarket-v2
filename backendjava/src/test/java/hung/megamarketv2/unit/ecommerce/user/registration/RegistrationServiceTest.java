@@ -10,6 +10,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.time.LocalDateTime;
+import java.util.Arrays;
 
 import static org.assertj.core.api.Assertions.*;
 
@@ -19,6 +20,9 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
+import org.springframework.transaction.PlatformTransactionManager;
 
 import hung.megamarketv2.common.account.ErrorCodes.AccountRepositoryErrorCodes;
 import hung.megamarketv2.common.account.repositories.AccountRepository;
@@ -47,7 +51,10 @@ import hung.megamarketv2.common.profile.ErrorCodes.ProfileRepositoryErrorCodes;
 import hung.megamarketv2.common.profile.repositories.ProfileRepository;
 import hung.megamarketv2.common.user.ErrorCodes.UserRepositoryErrorCodes;
 import hung.megamarketv2.common.user.repositories.UserRepository;
+import hung.megamarketv2.ecommerce.modules.security.services.SecurityService;
+import hung.megamarketv2.ecommerce.modules.user.modules.registration.Dto.EmailOtpSendingResult;
 import hung.megamarketv2.ecommerce.modules.user.modules.registration.Dto.EmailSubmissionResult;
+import hung.megamarketv2.ecommerce.modules.user.modules.registration.Dto.PasswordSubmissionResult;
 import hung.megamarketv2.ecommerce.modules.user.modules.registration.ErrorCodes.RegistrationRepositoryErrorCodes;
 import hung.megamarketv2.ecommerce.modules.user.modules.registration.ErrorCodes.RegistrationServiceErrorCodes;
 import hung.megamarketv2.ecommerce.modules.user.modules.registration.repositories.RegistrationRepository;
@@ -55,6 +62,7 @@ import hung.megamarketv2.ecommerce.modules.user.modules.registration.services.Re
 import hung.megamarketv2.ecommerce.modules.user.modules.registration.services.RegistrationServiceImp;
 
 @ExtendWith(MockitoExtension.class)
+@DataJpaTest
 class RegistrationServiceTest {
 
         private static final String VALID_EMAIL = "mail@gmail.com";
@@ -89,13 +97,19 @@ class RegistrationServiceTest {
         @Mock
         private RegistrationRepository mockedRegistrationRepository;
 
+        @Mock
+        private SecurityService mockedSecurityService;
+
         private RegistrationService service;
+
+        @Autowired
+        private PlatformTransactionManager transactionManager;
 
         @BeforeEach
         void setUp() {
-                service = new RegistrationServiceImp(mockedOtpService, mockedPasswordService,
+                service = new RegistrationServiceImp(mockedOtpService, mockedSecurityService, mockedPasswordService,
                                 mockedAccountRepository, mockedPasswordRepository, mockedProfileRepository,
-                                mockedUserRepository, mockedRegistrationRepository);
+                                mockedUserRepository, mockedRegistrationRepository, transactionManager);
         }
 
         @Test
@@ -371,6 +385,36 @@ class RegistrationServiceTest {
         }
 
         @Test
+        void testResendEmailOtpHappyPath() {
+                RegistrationRequest request = new RegistrationRequest(VALID_EMAIL, ROLE,
+                                LocalDateTime.now().plusSeconds(REQUEST_TIMEOUT_IN_SECONDS));
+
+                request.setTextId(REGISTRATION_TEXT_ID);
+
+                when(mockedRegistrationRepository.findtByTextIdThenLockRequestInDatabase(REGISTRATION_TEXT_ID))
+                                .thenReturn(
+                                                Result.ofValue(request));
+
+                OtpIdentity identity = new OtpIdentity(OtpType.EMAIL, RegistrationServiceImp.OTP_REFERENCE_TYPE,
+                                REGISTRATION_TEXT_ID);
+
+                OtpSendingResult otpSendingResult = new OtpSendingResult("123456", 1);
+
+                when(mockedOtpService.sendOtp(eq(identity), eq(VALID_EMAIL), eq(null)))
+                                .thenReturn(Result.ofValue(otpSendingResult));
+
+                Result<EmailOtpSendingResult, RegistrationServiceErrorCodes> result = service
+                                .sendEmailOtp(request.getTextId());
+
+                assertTrue(result.isSuccessful);
+                assertEquals(otpSendingResult.coolDownSeconds(), result.value.otpCooldownSeconds());
+                assertThat(request.getStep()).isEqualTo(RegistrationSteps.VERIFY_EMAIL_OTP);
+
+                assertThat(request.getEmailVerificationStatus())
+                                .isEqualTo(EmailVerificationStatus.NOT_VERIFIED);
+        }
+
+        @Test
         void testSubmitPhoneNumberHappyPath() {
                 when(mockedUserRepository.findByPhoneNumber(VALID_PHONE_NUMBER))
                                 .thenReturn(Result.ofError(UserRepositoryErrorCodes.USER_NOT_FOUND));
@@ -562,11 +606,15 @@ class RegistrationServiceTest {
                                         && pf.getUser().equals(user);
                 }))).thenReturn(Result.ofValue(profile));
 
-                Outcome<RegistrationServiceErrorCodes> outcome = service.submitPassword(
+                when(mockedSecurityService.getAccessTokenForUser(user.getId(),
+                                Arrays.asList(user.getRole().toString()))).thenReturn(Result.ofValue("token"));
+
+                Result<PasswordSubmissionResult, RegistrationServiceErrorCodes> result = service.submitPassword(
                                 VALID_PASSWORD,
                                 REGISTRATION_TEXT_ID);
 
-                assertTrue(outcome.isSuccessful);
+                assertTrue(result.isSuccessful);
+                assertThat(result.value.accessToken()).isEqualTo("token");
 
                 assertThat(request.getStep()).isEqualTo(RegistrationSteps.COMPLETED);
                 assertThat(request.getStatus()).isEqualTo(RegistrationStatus.APPROVED);
@@ -590,12 +638,12 @@ class RegistrationServiceTest {
 
                 when(mockedPasswordService.validatePassword(VALID_PASSWORD)).thenReturn(false);
 
-                Outcome<RegistrationServiceErrorCodes> outcome = service.submitPassword(
+                Result<PasswordSubmissionResult, RegistrationServiceErrorCodes> result = service.submitPassword(
                                 VALID_PASSWORD,
                                 REGISTRATION_TEXT_ID);
 
-                assertFalse(outcome.isSuccessful);
-                assertThat(outcome.error).isEqualTo(RegistrationServiceErrorCodes.INVALID_PASSWORD);
+                assertFalse(result.isSuccessful);
+                assertThat(result.error).isEqualTo(RegistrationServiceErrorCodes.INVALID_PASSWORD);
 
         }
 
@@ -633,12 +681,12 @@ class RegistrationServiceTest {
                                 .thenReturn(
                                                 Result.ofValue(request));
 
-                Outcome<RegistrationServiceErrorCodes> outcome = service.submitPassword(
+                Result<PasswordSubmissionResult, RegistrationServiceErrorCodes> result = service.submitPassword(
                                 VALID_PASSWORD,
                                 REGISTRATION_TEXT_ID);
 
-                assertFalse(outcome.isSuccessful);
-                assertThat(outcome.error).isEqualTo(RegistrationServiceErrorCodes.REQUEST_EXPIRED);
+                assertFalse(result.isSuccessful);
+                assertThat(result.error).isEqualTo(RegistrationServiceErrorCodes.REQUEST_EXPIRED);
 
                 assertThat(request.getStep()).isEqualTo(RegistrationSteps.SUBMIT_PASSWORD);
                 assertThat(request.getStatus()).isEqualTo(RegistrationStatus.PROCESSING);
@@ -661,12 +709,12 @@ class RegistrationServiceTest {
                                 .thenReturn(
                                                 Result.ofValue(request));
 
-                Outcome<RegistrationServiceErrorCodes> outcome = service.submitPassword(
+                Result<PasswordSubmissionResult, RegistrationServiceErrorCodes> result = service.submitPassword(
                                 VALID_PASSWORD,
                                 REGISTRATION_TEXT_ID);
 
-                assertFalse(outcome.isSuccessful);
-                assertThat(outcome.error).isEqualTo(RegistrationServiceErrorCodes.INVALID_REQUEST_STATUS);
+                assertFalse(result.isSuccessful);
+                assertThat(result.error).isEqualTo(RegistrationServiceErrorCodes.INVALID_REQUEST_STATUS);
 
                 assertThat(request.getStep()).isEqualTo(RegistrationSteps.SUBMIT_PASSWORD);
                 assertThat(request.getStatus()).isEqualTo(RegistrationStatus.REJECTED);
@@ -685,13 +733,12 @@ class RegistrationServiceTest {
                 when(mockedRegistrationRepository.findtByTextIdThenLockRequestInDatabase(REGISTRATION_TEXT_ID))
                                 .thenReturn(
                                                 Result.ofValue(request));
-
-                Outcome<RegistrationServiceErrorCodes> outcome = service.submitPassword(
+                Result<PasswordSubmissionResult, RegistrationServiceErrorCodes> result = service.submitPassword(
                                 VALID_PASSWORD,
                                 REGISTRATION_TEXT_ID);
 
-                assertFalse(outcome.isSuccessful);
-                assertThat(outcome.error).isEqualTo(RegistrationServiceErrorCodes.INVALID_REQUEST_STEP);
+                assertFalse(result.isSuccessful);
+                assertThat(result.error).isEqualTo(RegistrationServiceErrorCodes.INVALID_REQUEST_STEP);
 
                 assertThat(request.getStep()).isEqualTo(RegistrationSteps.SUBMIT_PHONE_NUMBER);
                 assertThat(request.getStatus()).isEqualTo(RegistrationStatus.PROCESSING);
@@ -711,12 +758,12 @@ class RegistrationServiceTest {
                                 .thenReturn(
                                                 Result.ofValue(request));
 
-                Outcome<RegistrationServiceErrorCodes> outcome = service.submitPassword(
+                Result<PasswordSubmissionResult, RegistrationServiceErrorCodes> result = service.submitPassword(
                                 VALID_PASSWORD,
                                 REGISTRATION_TEXT_ID);
 
-                assertFalse(outcome.isSuccessful);
-                assertThat(outcome.error).isEqualTo(RegistrationServiceErrorCodes.MISSING_EMAIL);
+                assertFalse(result.isSuccessful);
+                assertThat(result.error).isEqualTo(RegistrationServiceErrorCodes.MISSING_EMAIL);
 
                 assertThat(request.getStep()).isEqualTo(RegistrationSteps.SUBMIT_PASSWORD);
                 assertThat(request.getStatus()).isEqualTo(RegistrationStatus.PROCESSING);
@@ -735,12 +782,12 @@ class RegistrationServiceTest {
                                 .thenReturn(
                                                 Result.ofValue(request));
 
-                Outcome<RegistrationServiceErrorCodes> outcome = service.submitPassword(
+                Result<PasswordSubmissionResult, RegistrationServiceErrorCodes> result = service.submitPassword(
                                 VALID_PASSWORD,
                                 REGISTRATION_TEXT_ID);
 
-                assertFalse(outcome.isSuccessful);
-                assertThat(outcome.error).isEqualTo(RegistrationServiceErrorCodes.MISSING_PHONE_NUMBER);
+                assertFalse(result.isSuccessful);
+                assertThat(result.error).isEqualTo(RegistrationServiceErrorCodes.MISSING_PHONE_NUMBER);
 
                 assertThat(request.getStep()).isEqualTo(RegistrationSteps.SUBMIT_PASSWORD);
                 assertThat(request.getStatus()).isEqualTo(RegistrationStatus.PROCESSING);
@@ -759,12 +806,12 @@ class RegistrationServiceTest {
                                 .thenReturn(
                                                 Result.ofValue(request));
 
-                Outcome<RegistrationServiceErrorCodes> outcome = service.submitPassword(
+                Result<PasswordSubmissionResult, RegistrationServiceErrorCodes> result = service.submitPassword(
                                 VALID_PASSWORD,
                                 REGISTRATION_TEXT_ID);
 
-                assertFalse(outcome.isSuccessful);
-                assertThat(outcome.error).isEqualTo(RegistrationServiceErrorCodes.EMAIL_NOT_VERIFIED);
+                assertFalse(result.isSuccessful);
+                assertThat(result.error).isEqualTo(RegistrationServiceErrorCodes.EMAIL_NOT_VERIFIED);
 
                 assertThat(request.getStep()).isEqualTo(RegistrationSteps.SUBMIT_PASSWORD);
                 assertThat(request.getStatus()).isEqualTo(RegistrationStatus.PROCESSING);

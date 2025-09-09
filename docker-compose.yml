@@ -1,0 +1,58 @@
+services:
+  ecommerce_backend:
+    container_name: ecommerce_backend
+    depends_on:
+      - postgres_db
+      - redis_token_introspection
+    build: ./backendjava
+    ports:
+      - 8080:8080
+    env_file: "docker.env"
+
+  postgres_db:
+    container_name: postgres_db
+    image: postgres:17
+    restart: always
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    ports:
+      - 3366:5432
+    env_file: "docker.env"
+
+  redis_token_introspection:
+    container_name: redis_token_introspection
+    image: redis:7.4.2
+    restart: always
+    volumes:
+      - redis_introspection_data:/data
+    ports:
+      - "6379:6379"
+    env_file: "docker.env"
+
+  redis_insight:
+    image: redislabs/redisinsight:2.64.1
+    container_name: redis_insight
+    restart: always
+    ports: 
+      - 5540:5540
+    volumes:
+      - redis_insight_data:/db
+
+  ecommerce_frontend:
+    container_name: ecommerce_frontend
+    depends_on:
+      - ecommerce_backend
+    build: ./frontendtypescript
+    restart: always
+    volumes:
+      - '.:/app'
+      - './node_modules:/app/node_modules'
+    ports:
+      - 3000:5173
+    env_file: "docker.env"
+
+
+volumes:
+  pgdata:
+  redis_introspection_data:
+  redis_insight_data:

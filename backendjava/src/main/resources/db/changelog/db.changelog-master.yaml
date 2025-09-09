@@ -3,3 +3,7 @@ databaseChangeLog:
     file: db/changelog/init.yaml
  - include:
     file: db/changelog/add_persistent_keypair.yaml
+ - include:
+    file: db/changelog/create_registered_client_table.yaml
+ - include:
+    file: db/changelog/create_oauth2_authorization_table.yaml

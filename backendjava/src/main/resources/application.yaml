@@ -2,6 +2,8 @@
 logging:
   level: 
     ROOT: info
+  file:
+    name: logs/app.log
 
 
 spring:
@@ -32,6 +34,12 @@ spring:
     open-in-view: false
     defer-datasource-initialization: false
 
+  data:
+    redis:
+      host: ${REDIS_HOST}
+      password: ${REDIS_PASSWORD}
+      port: 6379
+
   jackson:
     property-naming-strategy: SNAKE_CASE
 
@@ -40,12 +48,19 @@ otp:
     length: 6
     lifetime-in-seconds: 120
     verification-attempt-limit: 5
+    cooldown-seconds: 60
 
 request-lifetime-in-seconds: 1800 # 60*30
 
 password-lifetime-in-seconds: 15552000 # 3600*24*30*6
 
 keyset-uri: http://localhost:8080/oauth2/jwks
+
+token-uri: http://localhost:8080/oauth2/token
+
+ecommerce-front-end-base_uri: http://localhost:5173/
+
+introspection-uri: http://localhost:8080/oauth2/introspect
 
 access-token-lifetime-in-seconds: 86400
 
@@ -56,3 +71,7 @@ auth-client-secret: ${AUTH_CLIENT_SECRET}
 
 encryption-salt: ${AUTH_ENCRYPTION_SALT}
 encryption-password: ${AUTH_ENCRYPTION_PASSWORD}
+
+resource-server.client-id: ${RESOURCE_SERVER_CLIENT_ID}
+resource-server.client-secret: ${RESOURCE_SERVER_CLIENT_SECRET}
+resource-server.access-token-lifetime-in-seconds: 86400

@@ -11,6 +11,7 @@ import hung.megamarketv2.ecommerce.modules.user.modules.registration.Dto.EmailSu
 import hung.megamarketv2.ecommerce.modules.user.modules.registration.Dto.EmailSubmissionResult;
 import hung.megamarketv2.ecommerce.modules.user.modules.registration.Dto.EmailVerificationRequest;
 import hung.megamarketv2.ecommerce.modules.user.modules.registration.Dto.PasswordSubmissionRequest;
+import hung.megamarketv2.ecommerce.modules.user.modules.registration.Dto.PasswordSubmissionResult;
 import hung.megamarketv2.ecommerce.modules.user.modules.registration.Dto.PhoneNumberSubmissionRequest;
 import hung.megamarketv2.ecommerce.modules.user.modules.registration.ErrorCodes.RegistrationServiceErrorCodes;
 import hung.megamarketv2.ecommerce.modules.user.modules.registration.services.RegistrationService;
@@ -48,11 +49,10 @@ public class RegistrationController {
 
         return service.submitPhoneNumber(request.phoneNumber(),
                 request.registrationToken());
-
     }
 
     @PostMapping("/submit-password")
-    public Outcome<RegistrationServiceErrorCodes> submitPassword(
+    public Result<PasswordSubmissionResult, RegistrationServiceErrorCodes> submitPassword(
             @Valid @RequestBody PasswordSubmissionRequest request) {
 
         return service.submitPassword(request.password(), request.registrationToken());

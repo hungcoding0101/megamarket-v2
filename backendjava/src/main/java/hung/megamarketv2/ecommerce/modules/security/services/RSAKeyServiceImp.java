@@ -44,19 +44,15 @@ public class RSAKeyServiceImp implements RSAKeyService {
 
         try {
             PersistentKeyPair keyPair = keyPairOutcome.value;
+            KeyFactory keyFactory = KeyFactory.getInstance("RSA");
 
             byte[] publicKeyBytes = bytesEncryptor.decrypt(keyPair.getPublicKeyBytes());
             X509EncodedKeySpec publicKeySpec = new X509EncodedKeySpec(publicKeyBytes);
-            KeyFactory keyFactory;
-
-            keyFactory = KeyFactory.getInstance("RSA");
             RSAPublicKey publicKey = (RSAPublicKey) keyFactory.generatePublic(publicKeySpec);
 
             byte[] privateKeyBytes = bytesEncryptor.decrypt(keyPair.getPrivateKeyBytes());
             PKCS8EncodedKeySpec privateKeySpec = new PKCS8EncodedKeySpec(privateKeyBytes);
-
-            RSAPrivateKey privateKey;
-            privateKey = (RSAPrivateKey) keyFactory.generatePrivate(privateKeySpec);
+            RSAPrivateKey privateKey = (RSAPrivateKey) keyFactory.generatePrivate(privateKeySpec);
 
             RSAKey rsaKey = new RSAKey.Builder(publicKey)
                     .privateKey(privateKey)
